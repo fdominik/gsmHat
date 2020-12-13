@@ -88,6 +88,7 @@ class GSMHat:
         self.__working = True
         self.__state = 0
         self.__nextState = 0
+        self.__isSimMissing = True
         self.__smsToRead = 0
         self.__retryAfterTimeout = False
         self.__retryAfterTimeoutCount = 0
@@ -438,7 +439,7 @@ class GSMHat:
     def __restartProcedure(self):
         self.__logger.error('Try to restart gsm module')
         self.__pressPowerKey()
-        self.__state = 1
+        self.__state = 0
         self.__writeLock = False
         self.__retryAfterTimeout = False
         self.__sentTimeout = 0
@@ -469,7 +470,11 @@ class GSMHat:
                     self.__retryAfterTimeout = True
                     self.__retryAfterTimeoutCount = 3
 
-                self.__state = 2
+                if self.__isSimMissing:
+                    self.__state = 97
+                else:
+                    self.__state = 2
+
                 self.__writeLock = False
                 self.__sentTimeout = 0
                 return False
@@ -508,7 +513,8 @@ class GSMHat:
             if self.__state == 0:
                 if self.__sendToHat('AT+CMEE=2'):
                     self.__sendToHat('AT+cpin?')
-                    self.__state = 3
+                    self.__isSimMissing = False
+                    self.__state = 1
             elif self.__state == 1:
                 if self.__sendToHat('AT+CMGF=1'):
                     self.__startGPSUnit()

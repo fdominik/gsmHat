@@ -83,10 +83,10 @@ class GSMHat:
 
     def __disconnect(self):
         self.__ser.close()
-    
+
     def __startWorking(self):
         self.__working = True
-        self.__state = 1
+        self.__state = 0
         self.__nextState = 0
         self.__smsToRead = 0
         self.__retryAfterTimeout = False
@@ -475,7 +475,7 @@ class GSMHat:
                 return False
             else:
                 self.__logger.critical('Exception: Unhandled timeout during data reception')
-                raise 'Unhandled timeout during data reception'
+                raise Exception('Unhandled timeout during data reception')
 
         if self.__writeLock:
             return False
@@ -505,7 +505,11 @@ class GSMHat:
 
             # Statemachine
             actTime = int(round(time.time() * 1000))
-            if self.__state == 1:
+            if self.__state == 0:
+                if self.__sendToHat('AT+CMEE=2'):
+                    self.__sendToHat('AT+cpin?')
+                    self.__state = 3
+            elif self.__state == 1:
                 if self.__sendToHat('AT+CMGF=1'):
                     self.__startGPSUnit()
                     self.__stopGPSsending()
